@@ -1,5 +1,6 @@
 #include <cassert>
 #include <execution>
+#include <iostream>
 
 template <typename Type>
 class SingleLinkedList {
@@ -31,7 +32,7 @@ class SingleLinkedList {
 
         BasicIterator() = default;
 
-        BasicIterator(const BasicIterator<Type>& other) noexcept : node_(other.node_) 
+        BasicIterator(const BasicIterator<Type>& other) noexcept : node_(other.node_)
         {
         }
 
@@ -75,8 +76,6 @@ class SingleLinkedList {
         Node* node_ = nullptr;
     };
 
-
-
 public:
 
     using value_type = Type;
@@ -90,43 +89,37 @@ public:
     }
 
     [[nodiscard]] Iterator end() noexcept {
-        Iterator end = begin();
-        for (int i = 0; i < size_; ++i) {
-            ++end;
-        }
-        return end;
+        Node* end_node = nullptr;
+        return Iterator{ end_node };
     }
 
     [[nodiscard]] ConstIterator begin() const noexcept {
-        return ConstIterator{ head_.next_node };
+        return cbegin();
     }
 
     [[nodiscard]] ConstIterator end() const noexcept {
-        ConstIterator end = begin();
-        for (int i = 0; i < size_; ++i) {
-            ++end;
-        }
-        return end;
+        return cend();
     }
 
     [[nodiscard]] ConstIterator cbegin() const noexcept {
-        return begin();
+        return ConstIterator{ head_.next_node };
     }
 
     [[nodiscard]] ConstIterator cend() const noexcept {
-        return end();
+        Node* end_node = nullptr;
+        return ConstIterator{ end_node };
     }
-    
+
     [[nodiscard]] Iterator before_begin() noexcept {
         return Iterator{ &head_ };
     }
 
     [[nodiscard]] ConstIterator before_begin() const noexcept {
-        return ConstIterator{ const_cast<Node*>(&head_) };
+        return cbefore_begin();
     }
 
     [[nodiscard]] ConstIterator cbefore_begin() const noexcept {
-        return before_begin();
+        return ConstIterator{ const_cast<Node*>(&head_) };
     }
 
     SingleLinkedList(std::initializer_list<Type> values) {
@@ -186,10 +179,7 @@ public:
         Clear();
     }
 
-    SingleLinkedList() : size_(0)
-    {
-
-    }
+    SingleLinkedList() : size_(0) {}
 
     [[nodiscard]] size_t GetSize() const noexcept {
         return size_;
@@ -222,7 +212,7 @@ public:
         temp = nullptr;
         delete temp;
 
-        return Iterator{pos.node_->next_node};
+        return Iterator{ pos.node_->next_node };
     }
 
     void PopFront() noexcept {
@@ -236,11 +226,12 @@ public:
     }
 
     Iterator EraseAfter(ConstIterator pos) noexcept {
-        Node* temp =  pos.node_->next_node;
-        pos.node_->next_node = pos.node_->next_node->next_node;
-
-        delete temp;
-        --size_;
+        if (pos.node_->next_node) {
+            Node* temp = pos.node_->next_node;
+            pos.node_->next_node = pos.node_->next_node->next_node;
+            delete temp;
+            --size_;
+        }
         return Iterator{ pos.node_->next_node };
     }
 
@@ -259,6 +250,7 @@ bool operator==(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>&
     if (lhs.GetSize() != rhs.GetSize()) {
         return false;
     }
+    
     return std::equal(std::execution::par, lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
